@@ -1,0 +1,25 @@
+# Python Environment & Package Cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# dbt Logs, Compilation Artifacts, and Docs
+**/logs/
+**/target/
+**/dbt_packages/
+
+
+# DuckDB Files (Local Database & Storage)
+*.duckdb
+*.duckdb.wal
+
+# Dagster Environment & State Tracking
+**/.dagster/
+**/dagster.yaml
+**/history.db
+**/storage/
+
+# Ignore the raw source data directory (data is fetched idempotently via Python)
+data/raw/
