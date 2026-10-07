@@ -23,3 +23,6 @@ __pycache__/
 
 # Ignore the raw source data directory (data is fetched idempotently via Python)
 data/raw/
+
+# others
+temp/
