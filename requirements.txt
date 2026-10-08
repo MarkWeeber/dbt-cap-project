@@ -7,6 +7,9 @@ duckdb
 pandas
 pyarrow
 
+# REST API for downloading data
+requests
+
 # Orchestration & Lineage
 dagster
 dagster-dbt
