@@ -3,5 +3,6 @@ dbt_project:
     dev:
       type: duckdb
       path: "../dev.duckdb"
+      schema: DEV
       threads: 4
   target: dev

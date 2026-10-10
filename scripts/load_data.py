@@ -296,7 +296,7 @@ class DuckDBLoader:
             logger.warning(f"No files to load for table {table_name}")
             return 0
         
-        full_table_name = f"{RAW_SCHEMA}.{table_name}"
+        full_table_name = f"{RAW_SCHEMA}.RAW_{table_name}"
         
         try:
             # Convert paths to strings for SQL

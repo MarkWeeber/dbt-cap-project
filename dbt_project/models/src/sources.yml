@@ -1,0 +1,92 @@
+sources:
+  - name: raw_crypto_data
+    schema: raw
+    tables:
+      - name: btcusdt_1d
+        identifier: RAW_BTCUSDT_D1
+        columns:
+          - name: timestamp
+            tests:
+              - unique
+              - not_null
+          - name: open
+            tests:
+              - not_null
+          - name: high
+            tests:
+              - not_null
+          - name: low
+            tests:
+              - not_null
+          - name: close
+            tests:
+              - not_null
+          - name: volume
+            tests:
+              - not_null
+      - name: btcusdt_1h
+        identifier: RAW_BTCUSDT_H1
+        columns:
+          - name: timestamp
+            tests:
+              - unique
+              - not_null
+          - name: open
+            tests:
+              - not_null
+          - name: high
+            tests:
+              - not_null
+          - name: low
+            tests:
+              - not_null
+          - name: close
+            tests:
+              - not_null
+          - name: volume
+            tests:
+              - not_null
+      - name: ethusdt_1d
+        identifier: RAW_ETHUSDT_D1
+        columns:
+          - name: timestamp
+            tests:
+              - unique
+              - not_null
+          - name: open
+            tests:
+              - not_null
+          - name: high
+            tests:
+              - not_null
+          - name: low
+            tests:
+              - not_null
+          - name: close
+            tests:
+              - not_null
+          - name: volume
+            tests:
+              - not_null
+      - name: ethusdt_1h
+        identifier: RAW_ETHUSDT_H1
+        columns:
+          - name: timestamp
+            tests:
+              - unique
+              - not_null
+          - name: open
+            tests:
+              - not_null
+          - name: high
+            tests:
+              - not_null
+          - name: low
+            tests:
+              - not_null
+          - name: close
+            tests:
+              - not_null
+          - name: volume
+            tests:
+              - not_null

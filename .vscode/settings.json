@@ -11,8 +11,9 @@
             "type": "file",
             "path": "/mnt/data/Projects/dbt-cap-project/dev.duckdb",
             "readOnly": true,
-            "attached": true
+            "attached": false
         }
     ],
-    "duckdb.defaultDatabase": "dev"
+    "duckdb.defaultDatabase": "dev",
+    "dbt.dbtMajorVersion": "v1"
 }
