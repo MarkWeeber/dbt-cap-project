@@ -1,0 +1,333 @@
+models:
+
+  - name: stg_btcusdt_d1
+    description: Data checked for BTCUSDT D1 OHLCV values
+    columns:
+      - name: timestamp
+        description: A timestamp with time zone type
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: timestamp with time zone
+      - name: open
+        description: Open value for D1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: high
+        description: Highest value for D1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: low
+        description: Lowest value for D1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: close
+        description: Close value for D1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: volume
+        description: Trade volume for D1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+
+  - name: stg_btcusdt_h1
+    description: Data checked for BTCUSDT DH1 OHLCV values
+    columns:
+      - name: timestamp
+        description: A timestamp with time zone type
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: timestamp with time zone
+      - name: open
+        description: Open value for H1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: high
+        description: Highest value for H1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: low
+        description: Lowest value for H1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: close
+        description: Close value for H1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: volume
+        description: Trade volume for H1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+
+  - name: stg_ethusdt_d1
+    description: Data checked for ETHUSDT D1 OHLCV values
+    columns:
+      - name: timestamp
+        description: A timestamp with time zone type
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: timestamp with time zone
+      - name: open
+        description: Open value for D1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: high
+        description: Highest value for D1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: low
+        description: Lowest value for D1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: close
+        description: Close value for D1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: volume
+        description: Trade volume for D1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+
+  - name: stg_ethusdt_h1
+    description: Data checked for ETHUSDT DH1 OHLCV values
+    columns:
+      - name: timestamp
+        description: A timestamp with time zone type
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: timestamp with time zone
+      - name: open
+        description: Open value for H1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: high
+        description: Highest value for H1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: low
+        description: Lowest value for H1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: close
+        description: Close value for H1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+          - dbt_expectations.expect_column_quantile_values_to_be_between:
+              config:
+                severity: warn
+              arguments:
+                quantile: 0.95
+                min_value: 1000
+                max_value: 150000
+      - name: volume
+        description: Trade volume for H1
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double

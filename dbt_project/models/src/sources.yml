@@ -2,7 +2,7 @@ sources:
   - name: raw_crypto_data
     schema: raw
     tables:
-      - name: btcusdt_1d
+      - name: btcusdt_d1
         identifier: RAW_BTCUSDT_D1
         columns:
           - name: timestamp
@@ -24,7 +24,7 @@ sources:
           - name: volume
             tests:
               - not_null
-      - name: btcusdt_1h
+      - name: btcusdt_h1
         identifier: RAW_BTCUSDT_H1
         columns:
           - name: timestamp
@@ -46,7 +46,7 @@ sources:
           - name: volume
             tests:
               - not_null
-      - name: ethusdt_1d
+      - name: ethusdt_d1
         identifier: RAW_ETHUSDT_D1
         columns:
           - name: timestamp
@@ -68,7 +68,7 @@ sources:
           - name: volume
             tests:
               - not_null
-      - name: ethusdt_1h
+      - name: ethusdt_h1
         identifier: RAW_ETHUSDT_H1
         columns:
           - name: timestamp
