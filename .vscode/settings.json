@@ -14,6 +14,6 @@
             "attached": false
         }
     ],
-    "duckdb.defaultDatabase": "dev",
+    "duckdb.defaultDatabase": "memory",
     "dbt.dbtMajorVersion": "v1"
 }

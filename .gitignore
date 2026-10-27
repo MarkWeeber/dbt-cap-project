@@ -26,3 +26,4 @@ data/raw/
 
 # others
 temp/
+.vscode/
