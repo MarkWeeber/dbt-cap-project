@@ -23,10 +23,10 @@ import requests
 # Robust to the directory you run from (no more "../" CWD surprises).
 SAVE_PATH = Path(__file__).resolve().parent.parent / "data" / "raw"
 
-SYMBOLS = ["BTCUSDT", "ETHUSDT"]
-INTERVALS = ["1h", "1d"]
+SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT", "BNBUSDT"]
+INTERVALS = ["1h"]
 
-DATE_FROM = "2026-08"   # YYYY | YYYY-MM | YYYY-MM-DD (day is ignored)
+DATE_FROM = "2026-01"   # YYYY | YYYY-MM | YYYY-MM-DD (day is ignored)
 DATE_TO = ""            # empty = end of last completed month
 
 BASE_URL = "https://api.binance.com"

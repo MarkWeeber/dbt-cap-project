@@ -1,0 +1,18 @@
+# Core Data Stack
+dbt-core
+dbt-duckdb
+
+# Data Formats & Processing (Python + Parquet)
+duckdb
+pandas
+pyarrow
+
+# REST API for downloading data
+requests
+
+# Orchestration & Lineage
+#dagster
+#dagster-dbt
+
+# Formatting & Linting
+dbt-autofix

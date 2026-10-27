@@ -1,3 +1,6 @@
+# secrets
+.env
+
 # Python Environment & Package Cache
 .venv/
 venv/
@@ -21,8 +24,10 @@ __pycache__/
 **/history.db
 **/storage/
 
-# Ignore the raw source data directory (data is fetched idempotently via Python)
-data/raw/
+#   raw trader JSON is only needed to rebuild the seeds
+data/raw/traders/
+data/raw/_probe/
+
 
 # others
 temp/
