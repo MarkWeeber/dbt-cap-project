@@ -1,5 +1,5 @@
-WITH src_btcusdt_d1 AS (
-    SELECT * FROM {{ref ('src_btcusdt_d1')}}
+WITH src_xrpusdt_h1 AS (
+    SELECT * FROM {{ref ('src_xrpusdt_h1')}}
 )
 
 SELECT 
@@ -9,4 +9,4 @@ SELECT
     CAST(low AS DOUBLE) AS low,
     CAST(close AS DOUBLE) AS close,
     CAST(volume AS DOUBLE) AS volume
-FROM src_btcusdt_d1
+FROM src_xrpusdt_h1

@@ -1,29 +1,8 @@
 sources:
+
   - name: raw_crypto_data
     schema: raw
     tables:
-      - name: btcusdt_d1
-        identifier: RAW_BTCUSDT_D1
-        columns:
-          - name: timestamp
-            tests:
-              - unique
-              - not_null
-          - name: open
-            tests:
-              - not_null
-          - name: high
-            tests:
-              - not_null
-          - name: low
-            tests:
-              - not_null
-          - name: close
-            tests:
-              - not_null
-          - name: volume
-            tests:
-              - not_null
       - name: btcusdt_h1
         identifier: RAW_BTCUSDT_H1
         columns:
@@ -46,8 +25,9 @@ sources:
           - name: volume
             tests:
               - not_null
-      - name: ethusdt_d1
-        identifier: RAW_ETHUSDT_D1
+
+      - name: ethusdt_h1
+        identifier: RAW_ETHUSDT_H1
         columns:
           - name: timestamp
             tests:
@@ -68,8 +48,78 @@ sources:
           - name: volume
             tests:
               - not_null
-      - name: ethusdt_h1
-        identifier: RAW_ETHUSDT_H1
+
+      - name: bnbusdt_h1
+        identifier: RAW_BNBUSDT_H1
+        columns:
+          - name: timestamp
+            tests:
+              - unique
+              - not_null
+          - name: open
+            tests:
+              - not_null
+          - name: high
+            tests:
+              - not_null
+          - name: low
+            tests:
+              - not_null
+          - name: close
+            tests:
+              - not_null
+          - name: volume
+            tests:
+              - not_null
+
+      - name: dogeusdt_h1
+        identifier: RAW_DOGEUSDT_H1
+        columns:
+          - name: timestamp
+            tests:
+              - unique
+              - not_null
+          - name: open
+            tests:
+              - not_null
+          - name: high
+            tests:
+              - not_null
+          - name: low
+            tests:
+              - not_null
+          - name: close
+            tests:
+              - not_null
+          - name: volume
+            tests:
+              - not_null
+
+      - name: solusdt_h1
+        identifier: RAW_SOLUSDT_H1
+        columns:
+          - name: timestamp
+            tests:
+              - unique
+              - not_null
+          - name: open
+            tests:
+              - not_null
+          - name: high
+            tests:
+              - not_null
+          - name: low
+            tests:
+              - not_null
+          - name: close
+            tests:
+              - not_null
+          - name: volume
+            tests:
+              - not_null
+
+      - name: xrpusdt_h1
+        identifier: RAW_XRPUSDT_H1
         columns:
           - name: timestamp
             tests:

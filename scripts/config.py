@@ -29,8 +29,8 @@ DATE_FROM = date(2026, 1, 1)
 DATE_TO = date(2026, 9, 30)
 
 # --------------------------------------------------------------------- market
-SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT", "BNBUSDT"]
-INTERVAL = "1h"
+SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "AAVEUSDT", "TWTUSDT", "BNBUSDT", "LTCUSDT", "XRPUSDT"]
+INTERVALS = ["1h"]
 MARKET_TYPE = "UM"          # UM = USDS-M futures, CM = COIN-M futures
 
 # --------------------------------------------------------------------- traders

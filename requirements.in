@@ -3,7 +3,7 @@ dbt-core
 dbt-duckdb
 
 # Data Formats & Processing (Python + Parquet)
-duckdb
+duckdb<2
 pandas
 pyarrow
 
@@ -16,3 +16,4 @@ requests
 
 # Formatting & Linting
 dbt-autofix
+

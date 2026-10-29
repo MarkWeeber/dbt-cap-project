@@ -10,10 +10,10 @@
             "alias": "dev",
             "type": "file",
             "path": "/mnt/data/Projects/dbt-cap-project/dev.duckdb",
-            "readOnly": true,
             "attached": false
         }
     ],
-    "duckdb.defaultDatabase": "memory",
-    "dbt.dbtMajorVersion": "v1"
+    "duckdb.defaultDatabase": "dev",
+    "dbt.dbtMajorVersion": "v1",
+    "python.terminal.useEnvFile": true
 }

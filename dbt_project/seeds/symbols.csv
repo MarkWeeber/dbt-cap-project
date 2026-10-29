@@ -1,0 +1,9 @@
+symbol,base_asset,quote_asset,is_approved
+BTCUSDT,BTC,USDT,true
+ETHUSDT,ETH,USDT,true
+SOLUSDT,SOL,USDT,true
+AAVEUSDT,AAVE,USDT,true
+TWTUSDT,TWT,USDT,true
+BNBUSDT,BNB,USDT,true
+LTCUSDT,LTC,USDT,true
+XRPUSDT,XRP,USDT,true

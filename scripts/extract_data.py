@@ -1,99 +1,80 @@
 #!/usr/bin/env python3
 """
-Binance OHLCV downloader -> monthly parquet files (DuckDB-friendly).
+Binance OHLCV downloader -> monthly parquet files, driven entirely by config.py.
 
-Public API only (no keys). Idempotent: existing monthly files are skipped.
-Only fully completed months are ever written. Downloads are always whole
-months - any day component in the config dates is ignored.
+Public endpoint only, no API key. Symbols, intervals and the window all come
+from scripts/config.py, so the extraction window and the dbt filter window can
+never drift apart.
+
+Downloads are always whole months: the day component of DATE_FROM/DATE_TO is
+ignored on purpose, so a file is either a complete month or absent.
+
+Idempotent: a month that already has a non-empty file is skipped unless
+--force is given. A symbol Binance does not list is dropped once and never
+retried for the remaining months.
+
+Usage:
+    python3 extract_data.py                  # download everything missing
+    python3 extract_data.py --check-symbols  # probe symbols, download nothing
+    python3 extract_data.py --force          # re-download even if present
+    python3 extract_data.py --symbols BTCUSDT,ETHUSDT
 """
 
+import argparse
 import sys
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
 import requests
 
-# =============================================================================
-# CONFIGURATION - modify these values
-# =============================================================================
-
-# Robust to the directory you run from (no more "../" CWD surprises).
-SAVE_PATH = Path(__file__).resolve().parent.parent / "data" / "raw"
-
-SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT", "BNBUSDT"]
-INTERVALS = ["1h"]
-
-DATE_FROM = "2026-01"   # YYYY | YYYY-MM | YYYY-MM-DD (day is ignored)
-DATE_TO = ""            # empty = end of last completed month
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from config import (                          # noqa: E402
+    DATE_FROM, DATE_TO, INTERVALS, MAX_RETRIES, RAW_DIR,
+    REQUEST_DELAY, SYMBOLS, TIMEOUT,
+)
 
 BASE_URL = "https://api.binance.com"
 MAX_CANDLES = 1000
-REQUEST_DELAY = 0.25    # seconds between requests (safe for weight-5 calls)
-MAX_RETRIES = 4
 COMPLETED_MONTHS_ONLY = True
 
 
-# =============================================================================
-# DATE HELPERS
-# =============================================================================
+class UnsupportedSymbol(Exception):
+    """Binance does not list this pair."""
 
-def parse_date(value: str, is_end: bool = False) -> datetime:
-    """
-    Parse YYYY, YYYY-MM or YYYY-MM-DD and snap to a whole-month boundary.
 
-    Any day component is discarded on purpose: the result is always the first
-    instant of the month (is_end=False) or the last instant of the month
-    (is_end=True). This guarantees every downloaded file is a complete month.
-    """
-    parts = value.replace("/", "-").split("-")
-    year = int(parts[0])
-    month = int(parts[1]) if len(parts) > 1 else (12 if is_end else 1)
-
-    if is_end:
-        # First day of the next month, minus one day = last day of this month.
-        next_month = (datetime(year, month, 1, tzinfo=timezone.utc) + timedelta(days=32)).replace(day=1)
-        return (next_month - timedelta(days=1)).replace(hour=23, minute=59, second=59)
-    return datetime(year, month, 1, tzinfo=timezone.utc)
-
+# --------------------------------------------------------------------- window
 
 def last_completed_month_end() -> datetime:
-    """End of the previous calendar month (UTC)."""
-    now = datetime.now(timezone.utc)
-    last_day = datetime(now.year, now.month, 1, tzinfo=timezone.utc) - timedelta(days=1)
-    return last_day.replace(hour=23, minute=59, second=59)
+    """Last second of the previous calendar month (UTC)."""
+    first_of_this_month = datetime.now(timezone.utc).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0)
+    return first_of_this_month - timedelta(seconds=1)
 
 
-def get_date_range() -> tuple[datetime, datetime]:
-    start = parse_date(DATE_FROM)
-    end = parse_date(DATE_TO, is_end=True) if DATE_TO.strip() else last_completed_month_end()
+def resolve_range() -> tuple[datetime, datetime]:
+    """config dates -> whole-month UTC bounds, clipped to finished months."""
+    start = datetime(DATE_FROM.year, DATE_FROM.month, 1, tzinfo=timezone.utc)
+    month_after_end = (datetime(DATE_TO.year, DATE_TO.month, 1, tzinfo=timezone.utc)
+                       + timedelta(days=32)).replace(day=1)
+    end = month_after_end - timedelta(seconds=1)
 
     if COMPLETED_MONTHS_ONLY:
         end = min(end, last_completed_month_end())
 
     if start > end:
-        raise ValueError(f"DATE_FROM {start:%Y-%m-%d} is after DATE_TO {end:%Y-%m-%d}")
-
-    print(f"Date range: {start:%Y-%m-%d} -> {end:%Y-%m-%d}")
+        raise ValueError(f"window {start:%Y-%m-%d}..{end:%Y-%m-%d} is empty")
     return start, end
 
 
-# =============================================================================
-# TASK PLANNING
-# =============================================================================
+# --------------------------------------------------------------------- tasks
 
 @dataclass
 class MonthTask:
-    """
-    One unit of work: a single symbol + interval + month combination.
+    """One symbol + interval + month unit of work, owning its own path."""
 
-    The task owns its own destination path, so the rest of the script never
-    has to re-derive folder/file names. Folder layout is data/raw/YYYY_MM/ and
-    the file is SYMBOL_INTERVAL.parquet - one file per month keeps the DuckDB
-    partition granularity at month level.
-    """
     symbol: str
     interval: str
     year: int
@@ -101,40 +82,27 @@ class MonthTask:
 
     @property
     def folder(self) -> str:
-        """Month partition folder name, e.g. '2026_08'."""
         return f"{self.year}_{self.month:02d}"
 
     @property
     def path(self) -> Path:
-        """Full parquet path for this task, e.g. data/raw/2026_08/BTCUSDT_1H.parquet."""
-        return SAVE_PATH / self.folder / f"{self.symbol}_{self.interval.upper()}.parquet"
+        return RAW_DIR / self.folder / f"{self.symbol}_{self.interval.upper()}.parquet"
 
 
-def build_tasks(start: datetime, end: datetime) -> list[MonthTask]:
-    """
-    Expand a date range into every symbol x interval x month task.
-
-    Walks month by month from start to end (inclusive) and, for each month,
-    produces one MonthTask per configured symbol and interval. Uses a simple
-    (year, month) tuple comparison for the loop bound and rolls the month over
-    manually so no date-arithmetic library is needed.
-    """
+def build_tasks(start: datetime, end: datetime, symbols: list[str]) -> list[MonthTask]:
     tasks, y, m = [], start.year, start.month
     while (y, m) <= (end.year, end.month):
-        for symbol in SYMBOLS:
+        for symbol in symbols:
             for interval in INTERVALS:
                 tasks.append(MonthTask(symbol, interval.lower(), y, m))
-        # Advance one month, rolling December into January of the next year.
         y, m = (y + 1, 1) if m == 12 else (y, m + 1)
     return tasks
 
 
-# =============================================================================
-# BINANCE FETCH
-# =============================================================================
+# ------------------------------------------------------------------ fetching
 
 def get_klines(session, symbol, interval, start_ms, end_ms):
-    """One klines request with 429/418 handling and backoff."""
+    """One klines request with 429/418 handling. Raises UnsupportedSymbol on 400."""
     params = {
         "symbol": symbol,
         "interval": interval,
@@ -142,32 +110,69 @@ def get_klines(session, symbol, interval, start_ms, end_ms):
         "endTime": end_ms,
         "limit": MAX_CANDLES,
     }
-    for attempt in range(MAX_RETRIES):
+    for attempt in range(1, MAX_RETRIES + 1):
         time.sleep(REQUEST_DELAY)
-        r = session.get(f"{BASE_URL}/api/v3/klines", params=params, timeout=30)
+        r = session.get(f"{BASE_URL}/api/v3/klines", params=params, timeout=TIMEOUT)
 
         if r.status_code == 429:
-            time.sleep(int(r.headers.get("Retry-After", 60)))
+            wait = int(r.headers.get("Retry-After", 60))
+            print(f"  [rate limit] waiting {wait}s")
+            time.sleep(wait)
             continue
         if r.status_code == 418:
+            print("  [ip ban] waiting 120s")
             time.sleep(120)
             continue
+        if r.status_code == 400:
+            try:
+                message = r.json().get("msg", "")
+            except ValueError:
+                message = r.text[:80]
+            raise UnsupportedSymbol(message or "invalid request")
+
         r.raise_for_status()
         return r.json()
 
     raise RuntimeError(f"klines failed after {MAX_RETRIES} attempts")
 
 
+def check_symbols(session, symbols: list[str]) -> tuple[list[str], list[str]]:
+    """Probe each symbol with a one-candle request. Returns (usable, unsupported)."""
+    usable, unsupported = [], []
+    for symbol in symbols:
+        time.sleep(REQUEST_DELAY)
+        try:
+            r = session.get(f"{BASE_URL}/api/v3/klines", timeout=TIMEOUT,
+                            params={"symbol": symbol, "interval": "1h", "limit": 1})
+        except requests.RequestException as exc:
+            print(f"  {symbol:16} ERROR  {exc}")
+            unsupported.append(symbol)
+            continue
+
+        if r.status_code == 200:
+            print(f"  {symbol:16} OK     {len(r.json())} candle(s)")
+            usable.append(symbol)
+            continue
+
+        try:
+            reason = r.json().get("msg", r.status_code)
+        except ValueError:
+            reason = r.status_code
+        print(f"  {symbol:16} NO     {reason}")
+        unsupported.append(symbol)
+
+    return usable, unsupported
+
+
 def fetch_month(session, task: MonthTask) -> pd.DataFrame:
-    """Paginate one full month of candles for a task."""
+    """Paginate one whole month of candles."""
     month_start = datetime(task.year, task.month, 1, tzinfo=timezone.utc)
-    month_end = (datetime(task.year, task.month, 1, tzinfo=timezone.utc) + timedelta(days=32)).replace(day=1)
+    month_end = (month_start + timedelta(days=32)).replace(day=1)
 
     start_ms = int(month_start.timestamp() * 1000)
     end_ms = int(month_end.timestamp() * 1000) - 1
 
-    rows = []
-    cursor = start_ms
+    rows, cursor = [], start_ms
     while cursor < end_ms:
         batch = get_klines(session, task.symbol, task.interval, cursor, end_ms)
         if not batch:
@@ -187,28 +192,58 @@ def fetch_month(session, task: MonthTask) -> pd.DataFrame:
     ])[["timestamp", "open", "high", "low", "close", "volume"]]
 
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
-    for col in ["open", "high", "low", "close", "volume"]:
+    for col in ("open", "high", "low", "close", "volume"):
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
     return df.sort_values("timestamp").reset_index(drop=True)
 
 
-# =============================================================================
-# MAIN
-# =============================================================================
+# ---------------------------------------------------------------------- main
+
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Download Binance OHLCV for the config window.")
+    p.add_argument("--check-symbols", action="store_true",
+                   help="probe the configured symbols and exit without downloading")
+    p.add_argument("--force", action="store_true",
+                   help="re-download months that already exist")
+    p.add_argument("--symbols", default="",
+                   help="comma-separated override instead of config.SYMBOLS")
+    return p.parse_args()
+
 
 def main() -> int:
-    start, end = get_date_range()
-    SAVE_PATH.mkdir(parents=True, exist_ok=True)
-    print(f"Saving to: {SAVE_PATH}")
+    args = parse_args()
+    symbols = [s.strip().upper() for s in args.symbols.split(",") if s.strip()] or list(SYMBOLS)
 
     session = requests.Session()
-    tasks = build_tasks(start, end)
 
-    done = skipped = failed = 0
+    if args.check_symbols:
+        print(f"Probing {len(symbols)} symbol(s)...")
+        usable, unsupported = check_symbols(session, symbols)
+        print(f"\nusable={len(usable)} unsupported={len(unsupported)}")
+        if unsupported:
+            print("remove from config.SYMBOLS: " + ", ".join(unsupported))
+            return 2
+        return 0
+
+    start, end = resolve_range()
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    print(f"range   : {start:%Y-%m-%d} -> {end:%Y-%m-%d} (whole months)")
+    print(f"symbols : {len(symbols)}")
+    print(f"saving  : {RAW_DIR}")
+
+    tasks = build_tasks(start, end, symbols)
+    print(f"tasks   : {len(tasks)}\n")
+
+    saved = skipped = failed = 0
+    dead: set[str] = set()
+
     for i, task in enumerate(tasks, 1):
+        if task.symbol in dead:
+            continue
+
         label = f"{task.symbol} {task.interval} {task.folder}"
-        if task.path.exists() and task.path.stat().st_size > 0:
+        if not args.force and task.path.exists() and task.path.stat().st_size > 0:
             print(f"[{i}/{len(tasks)}] {label} - exists, skip")
             skipped += 1
             continue
@@ -216,20 +251,28 @@ def main() -> int:
         print(f"[{i}/{len(tasks)}] {label} - fetching")
         try:
             df = fetch_month(session, task)
-            if df.empty:
-                print("  no data")
-                skipped += 1
-                continue
-
-            task.path.parent.mkdir(parents=True, exist_ok=True)
-            df.to_parquet(task.path, engine="pyarrow", compression="snappy", index=False)
-            print(f"  saved {len(df)} rows -> {task.path}")
-            done += 1
-        except Exception as e:
-            print(f"  FAILED: {e}")
+        except UnsupportedSymbol as exc:
+            print(f"  unsupported ({exc}) - dropping the rest of this symbol")
+            dead.add(task.symbol)
+            continue
+        except (requests.RequestException, RuntimeError) as exc:
+            print(f"  FAILED: {exc}")
             failed += 1
+            continue
 
-    print(f"\nDone. saved={done} skipped={skipped} failed={failed}")
+        if df.empty:
+            print("  no data")
+            skipped += 1
+            continue
+
+        task.path.parent.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(task.path, engine="pyarrow", compression="snappy", index=False)
+        print(f"  saved {len(df)} rows -> {task.path.name}")
+        saved += 1
+
+    print(f"\nDone. saved={saved} skipped={skipped} failed={failed}")
+    if dead:
+        print("unsupported symbols: " + ", ".join(sorted(dead)))
     return 1 if failed else 0
 
 

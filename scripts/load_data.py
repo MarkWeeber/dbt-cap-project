@@ -50,14 +50,24 @@ def discover() -> dict[tuple[str, str], list[Path]]:
     """
     Recursively find parquet files and group them by (symbol, suffix).
 
-    Filenames look like SYMBOL_INTERVAL.parquet (e.g. BTCUSDT_1D.parquet).
-    Each group becomes one RAW_<SYMBOL>_<SUFFIX> table, so a table only
-    exists if at least one matching parquet was actually downloaded.
+    Filenames look like SYMBOL_INTERVAL.parquet (e.g. BTCUSDT_1h.parquet).
+    Anything that does not parse is reported and skipped, so stray files under
+    data/raw cannot abort the whole load.
     """
     groups: dict[tuple[str, str], list[Path]] = defaultdict(list)
     for path in sorted(RAW_DATA_PATH.rglob("*.parquet")):
-        symbol, _, interval = path.stem.partition("_")
-        groups[(symbol.upper(), interval_suffix(interval))].append(path)
+        if "_probe" in path.parts:
+            continue
+        symbol, sep, interval = path.stem.rpartition("_")
+        if not sep:
+            print(f"skip (no interval suffix): {path}")
+            continue
+        try:
+            suffix = interval_suffix(interval)
+        except ValueError:
+            print(f"skip (unrecognised interval): {path}")
+            continue
+        groups[(symbol.upper(), suffix)].append(path)
     return groups
 
 

@@ -1,5 +1,3 @@
-A capstone dbt project
-
 # Binance Trader Performance Analytics — dbt + DuckDB
 
 Analytics engineering capstone: reconstructing per-trader performance for top Binance

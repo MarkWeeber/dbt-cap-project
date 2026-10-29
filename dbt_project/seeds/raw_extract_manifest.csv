@@ -1,2 +1,0 @@
-run_id,source,symbols,start_date,end_date,positions_extracted,orders_extracted,rows_extracted,extracted_at
-d9c62f3b,kopyon_api,"BTCUSDT,ETHUSDT,SOLUSDT,XRPUSDT,DOGEUSDT,BNBUSDT",2026-08-01,2026-09-30,236,1132,1368,2026-10-20T17:59:35.100289+00:00
