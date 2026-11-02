@@ -1,0 +1,30 @@
+seeds:
+  - name: traders
+    config:
+      column_types:
+        trader_id: varchar
+  - name: extraction_manifest
+    config:
+      column_types:
+        trader_id: varchar
+  - name: open_positions
+    config:
+      column_types:
+        trader_id: varchar
+  - name: orders
+    config:
+      column_types:
+        trader_id: varchar
+        created_at: bigint
+        created_at_ts: bigint
+        updated_at: bigint
+  - name: positions
+    config:
+      column_types:
+        trader_id: varchar
+        position_id: varchar
+        opened_at: bigint
+        closed_at: bigint
+        updated_at: bigint
+        opened_at_ts: bigint
+        closed_at_ts: bigint

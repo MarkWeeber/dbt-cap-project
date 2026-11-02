@@ -51,14 +51,14 @@ ORDER_FIELDS = [
 OPEN_POSITION_FIELDS = [
     "trader_id", "market_type", "symbol", "symbol_is_approved", "side", "size",
     "entry_price", "mark_price", "leverage", "margin_mode", "margin",
-    "unrealized_pnl", "roi", "maintenance_margin", "margin_ratio", "pnl_currency",
+    "unrealized_pnl", "roi", "maintenance_margin", "margin_ratio", "pnl_currency", "snapshot_at",
 ]
 
 TRADER_FIELDS = [
     "trader_id", "name", "bio", "avatar_url", "account_name", "is_ai",
     "enabled", "sharing_positions", "days_active", "subscribers", "win_rate",
     "max_drawdown", "lifetime_pnl", "um_margin_balance", "cm_margin_balance",
-    "net_transfer", "profile_roi",
+    "net_transfer", "profile_roi", "snapshot_at",
 ]
 
 MANIFEST_FIELDS = [
@@ -82,6 +82,16 @@ def read_json(path: Path, key: str | None = None) -> list:
     if key is None:
         return payload if isinstance(payload, list) else [payload]
     return (payload or {}).get(key) or []
+
+def read_run_manifest() -> dict:
+    """Extraction manifest of the run that produced these folders."""
+    path = TRADERS_DIR / "_manifest.json"
+    if not path.is_file():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
 
 
 def split_symbol(symbol: str) -> tuple[str, str]:
@@ -136,7 +146,7 @@ def build_symbols() -> list[dict]:
     return rows
 
 
-def build_traders() -> list[dict]:
+def build_traders(snapshot_at: str) -> list[dict]:
     rows = []
     for trader_id, folder in iter_traders():
         profile = read_json(folder / "profile.json")
@@ -160,6 +170,7 @@ def build_traders() -> list[dict]:
             "cm_margin_balance": source.get("cmMarginBalance", ""),
             "net_transfer": source.get("netTransfer", ""),
             "profile_roi": profile.get("roi", ""),
+            "snapshot_at": snapshot_at,
         })
     return rows
 
@@ -296,7 +307,7 @@ def build_orders(index: dict[str, dict]) -> tuple[list[dict], int, int]:
     return rows, matched, len(rows)
 
 
-def build_open_positions() -> list[dict]:
+def build_open_positions(snapshot_at: str) -> list[dict]:
     rows = []
     for trader_id, folder in iter_traders():
         seen = set()
@@ -325,6 +336,7 @@ def build_open_positions() -> list[dict]:
                 "maintenance_margin": source.get("maintenanceMargin", ""),
                 "margin_ratio": source.get("marginRatio", ""),
                 "pnl_currency": entry.get("pnlCurrency", ""),
+                "snapshot_at": snapshot_at,
             })
     return rows
 
@@ -356,14 +368,18 @@ def main() -> int:
         removed += 1
     print(f"cleared {removed} stale csv file(s) from {SEEDS_DIR}")
 
-    traders = build_traders()
+    snapshot_at = read_run_manifest().get("extracted_at", "")
+    if not snapshot_at:
+        print("WARN: extracted_at missing from _manifest.json - snapshot_at will be empty")
+
+    traders = build_traders(snapshot_at)
     if not traders:
         print("no trader folders found")
         return 1
 
     positions, index = build_positions()
     orders, matched, total_orders = build_orders(index)
-    open_positions = build_open_positions()
+    open_positions = build_open_positions(snapshot_at)
 
     written = [
         write_csv("symbols.csv",

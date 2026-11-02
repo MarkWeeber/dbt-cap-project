@@ -1,0 +1,90 @@
+models:
+
+  - name: ref_traders
+    description: Reference for Traders information
+    columns:
+      - name: trader_id
+        description: Unique ID for Trader
+        tests:
+          - unique
+          - not_null
+      - name: name
+        description: Trader name
+      - name: days_active
+        description: Trader's days being active
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: integer
+      - name: subscribers
+        description: Number of Trader's subscribers
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: integer
+      - name: win_rate
+        description: Trader's overall win rate
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+      - name: max_drawdown
+        description: Trader's maximum drawdown
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+      - name: lifetime_pnl
+        description: Trader's lifetime Profit and Loss
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+      - name: um_margin_balance
+        description: Trader's margin balance
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+      - name: cm_margin_balance
+        description: Trader's cm margin balance
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+      - name: net_transfer
+        description: Trader's net transfer
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+      - name: profile_roi
+        description: Trader's Return of Investment rate
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              arguments:
+                column_type: double
+
+  - name: ref_symbols
+    description: Reference for accepted Symbols
+    columns:
+      - name: symbol
+        description: Symbol Name
+        tests:
+          - unique
+          - not_null
+      - name: base_asset
+        description: Base asset for Symbol
+        tests:
+          - unique
+          - not_null
+      - name: quote_asset
+        description: Quote asset for Symbol
+        tests:
+          - not_null

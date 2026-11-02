@@ -1,5 +1,5 @@
-WITH src_dogeusdt_h1 AS (
-    SELECT * FROM {{ref ('src_dogeusdt_h1')}}
+WITH src_twtusdt_h1 AS (
+    SELECT * FROM {{ref ('src_twtusdt_h1')}}
 )
 
 SELECT 
@@ -9,4 +9,4 @@ SELECT
     CAST(low AS DOUBLE) AS low,
     CAST(close AS DOUBLE) AS close,
     CAST(volume AS DOUBLE) AS volume
-FROM src_dogeusdt_h1
+FROM src_twtusdt_h1
