@@ -3,12 +3,22 @@
 Trader JSON (data/raw/traders) -> CSV seeds (dbt_project/seeds).
 
 Wipes every existing *.csv in the seeds directory first, so a seed that is no
-longer produced cannot linger. schema.yml is left alone.
+longer produced cannot linger. seeds.yml is left alone.
 
-Seeds stay deliberately raw: no surrogate keys and no order->position link.
-Both belong to dbt (dbt_utils.generate_surrogate_key in staging, a range join
-in the intermediate layer). Python only deduplicates and reports a match-rate
-estimate for QA.
+Seeds stay deliberately raw. Three things that *could* be produced here are
+left to dbt on purpose:
+
+  * surrogate keys          -> dbt_utils.generate_surrogate_key in staging
+  * order -> position link  -> range join in the intermediate layer
+  * derived flags           -> SQL, so the rule is visible next to the model
+
+Concretely, no `*_ts` twins of the epoch columns (they would only duplicate
+`opened_at` / `closed_at` / `created_at`) and no `symbol_is_approved` (approval
+is a join to stg_symbols). Timestamps stay raw epoch milliseconds and are cast
+in staging.
+
+Python keeps only two jobs it is actually good at: deduplication, and a
+match-rate estimate printed for QA.
 
 Usage:
     python3 build_seeds.py
@@ -17,7 +27,6 @@ Usage:
 import csv
 import json
 import sys
-from bisect import bisect_left
 from collections import defaultdict
 from pathlib import Path
 
@@ -34,24 +43,22 @@ POSITION_MATCH_SLACK_MS = 5_000
 QUOTE_ASSETS = ("USDT", "USDC", "BUSD", "FDUSD", "TUSD", "BTC", "ETH", "BNB")
 
 POSITION_FIELDS = [
-    "trader_id", "position_id", "market_type", "symbol", "symbol_is_approved",
-    "side", "status", "is_fully_closed", "margin_mode", "leverage",
-    "entry_price", "close_price", "opened_volume", "closed_volume",
-    "remaining_volume", "max_open_interest", "gross_pnl", "funding_pnl",
-    "trading_fee", "liquidation_fee", "net_pnl", "roi", "pnl_currency",
-    "opened_at", "closed_at", "updated_at", "opened_at_ts", "closed_at_ts",
+    "trader_id", "position_id", "market_type", "symbol", "side", "status",
+    "is_fully_closed", "margin_mode", "leverage", "entry_price", "close_price",
+    "opened_volume", "closed_volume", "remaining_volume", "max_open_interest",
+    "gross_pnl", "funding_pnl", "trading_fee", "liquidation_fee", "net_pnl",
+    "roi", "pnl_currency", "opened_at", "closed_at", "updated_at",
 ]
 
 ORDER_FIELDS = [
-    "trader_id", "market_type", "symbol", "symbol_is_approved", "side",
-    "position_side", "price", "quantity", "quote_quantity", "created_at",
-    "created_at_ts", "updated_at",
+    "trader_id", "market_type", "symbol", "side", "position_side", "price",
+    "quantity", "quote_quantity", "created_at", "updated_at",
 ]
 
 OPEN_POSITION_FIELDS = [
-    "trader_id", "market_type", "symbol", "symbol_is_approved", "side", "size",
-    "entry_price", "mark_price", "leverage", "margin_mode", "margin",
-    "unrealized_pnl", "roi", "maintenance_margin", "margin_ratio", "pnl_currency", "snapshot_at",
+    "trader_id", "market_type", "symbol", "side", "size", "entry_price",
+    "mark_price", "leverage", "margin_mode", "margin", "unrealized_pnl", "roi",
+    "maintenance_margin", "margin_ratio", "pnl_currency", "snapshot_at",
 ]
 
 TRADER_FIELDS = [
@@ -60,6 +67,8 @@ TRADER_FIELDS = [
     "max_drawdown", "lifetime_pnl", "um_margin_balance", "cm_margin_balance",
     "net_transfer", "profile_roi", "snapshot_at",
 ]
+
+SYMBOL_FIELDS = ["symbol", "base_asset", "quote_asset"]
 
 MANIFEST_FIELDS = [
     "trader_id", "positions", "orders", "open_positions", "is_partial",
@@ -83,6 +92,7 @@ def read_json(path: Path, key: str | None = None) -> list:
         return payload if isinstance(payload, list) else [payload]
     return (payload or {}).get(key) or []
 
+
 def read_run_manifest() -> dict:
     """Extraction manifest of the run that produced these folders."""
     path = TRADERS_DIR / "_manifest.json"
@@ -102,6 +112,7 @@ def split_symbol(symbol: str) -> tuple[str, str]:
 
 
 def to_int(value):
+    """Epoch value -> int, or "" when absent. Used for comparisons, not output."""
     try:
         return int(value)
     except (TypeError, ValueError):
@@ -134,16 +145,13 @@ def iter_traders():
 # ------------------------------------------------------------------ extraction
 
 def build_symbols() -> list[dict]:
-    rows = []
-    for symbol in SYMBOLS:
-        base, quote = split_symbol(symbol)
-        rows.append({
-            "symbol": symbol,
-            "base_asset": base,
-            "quote_asset": quote,
-            "is_approved": "true",
-        })
-    return rows
+    """The approved universe. Approval itself is implicit: this is the list."""
+    return [
+        {"symbol": symbol,
+         "base_asset": split_symbol(symbol)[0],
+         "quote_asset": split_symbol(symbol)[1]}
+        for symbol in SYMBOLS
+    ]
 
 
 def build_traders(snapshot_at: str) -> list[dict]:
@@ -176,7 +184,13 @@ def build_traders(snapshot_at: str) -> list[dict]:
 
 
 def build_positions() -> tuple[list[dict], dict[str, dict]]:
-    """Returns position rows plus a per-trader (symbol, side) time index for QA."""
+    """Returns position rows plus a per-trader (symbol, side) time index for QA.
+
+    The index exists only to print a match-rate estimate; the real link is built
+    in dbt. Keying on (symbol, order side) is what makes the estimate meaningful:
+    positionSide arrives as BOTH for one-way accounts, so it cannot be part of
+    the key.
+    """
     rows, index = [], defaultdict(dict)
 
     for trader_id, folder in iter_traders():
@@ -204,7 +218,6 @@ def build_positions() -> tuple[list[dict], dict[str, dict]]:
                 "position_id": position_id,
                 "market_type": (position.get("sourceDetails") or {}).get("marketType", MARKET_TYPE),
                 "symbol": symbol,
-                "symbol_is_approved": "true" if symbol in APPROVED else "false",
                 "side": side,
                 "status": status,
                 "is_fully_closed": "true" if status == "CLOSED" else "false",
@@ -226,12 +239,8 @@ def build_positions() -> tuple[list[dict], dict[str, dict]]:
                 "opened_at": position.get("openedAt", ""),
                 "closed_at": position.get("closedAt", ""),
                 "updated_at": position.get("updatedAt", ""),
-                "opened_at_ts": to_int(position.get("openedAt")),
-                "closed_at_ts": to_int(position.get("closedAt")),
             })
 
-            # Key on (symbol, order side) only: positionSide arrives as BOTH for
-            # one-way accounts, so it cannot be part of the key.
             open_side = "BUY" if side == "LONG" else "SELL"
             close_side = "SELL" if side == "LONG" else "BUY"
             opened_ts = to_int(position.get("openedAt"))
@@ -281,7 +290,7 @@ def build_orders(index: dict[str, dict]) -> tuple[list[dict], int, int]:
             # second-truncated value is the dedupe key.
             signature = (symbol, side, order.get("positionSide"),
                          order.get("price"), order.get("quantity"),
-                         int(created) // 1000 if created != "" else "")
+                         created // 1000 if created != "" else "")
             if signature in seen:
                 continue
             seen.add(signature)
@@ -293,14 +302,12 @@ def build_orders(index: dict[str, dict]) -> tuple[list[dict], int, int]:
                 "trader_id": trader_id,
                 "market_type": (order.get("sourceDetails") or {}).get("marketType", MARKET_TYPE),
                 "symbol": symbol,
-                "symbol_is_approved": "true" if symbol in APPROVED else "false",
                 "side": side,
                 "position_side": order.get("positionSide") or "",
                 "price": order.get("price", ""),
                 "quantity": order.get("quantity", ""),
                 "quote_quantity": order.get("quoteQuantity", ""),
                 "created_at": order.get("createdAt", ""),
-                "created_at_ts": created,
                 "updated_at": order.get("updatedAt", ""),
             })
 
@@ -323,7 +330,6 @@ def build_open_positions(snapshot_at: str) -> list[dict]:
                 "trader_id": trader_id,
                 "market_type": source.get("marketType", MARKET_TYPE),
                 "symbol": symbol,
-                "symbol_is_approved": "true" if symbol in APPROVED else "false",
                 "side": entry.get("side", ""),
                 "size": entry.get("size", ""),
                 "entry_price": entry.get("entryPrice", ""),
@@ -382,8 +388,7 @@ def main() -> int:
     open_positions = build_open_positions(snapshot_at)
 
     written = [
-        write_csv("symbols.csv",
-                  ["symbol", "base_asset", "quote_asset", "is_approved"], build_symbols()),
+        write_csv("symbols.csv", SYMBOL_FIELDS, build_symbols()),
         write_csv("traders.csv", TRADER_FIELDS, traders),
         write_csv("positions.csv", POSITION_FIELDS, positions),
         write_csv("orders.csv", ORDER_FIELDS, orders),
@@ -391,7 +396,7 @@ def main() -> int:
         write_csv("extraction_manifest.csv", MANIFEST_FIELDS, build_manifest()),
     ]
 
-    approved = sum(1 for p in positions if p["symbol_is_approved"] == "true")
+    approved = sum(1 for p in positions if p["symbol"] in APPROVED)
     share = approved / len(positions) * 100 if positions else 0
     order_rate = matched / total_orders * 100 if total_orders else 0
 

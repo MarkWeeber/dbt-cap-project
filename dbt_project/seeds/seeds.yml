@@ -25,7 +25,6 @@ seeds:
       column_types:
         trader_id: varchar
         created_at: bigint
-        created_at_ts: bigint
         updated_at: bigint
     columns:
       - name: trader_id
@@ -42,9 +41,6 @@ seeds:
       - name: created_at
         data_tests:
           - not_null
-      - name: created_at_ts
-        data_tests:
-          - not_null
       - name: updated_at
         data_tests:
           - not_null
@@ -57,8 +53,6 @@ seeds:
         opened_at: bigint
         closed_at: bigint
         updated_at: bigint
-        opened_at_ts: bigint
-        closed_at_ts: bigint
     columns:
       - name: trader_id
         data_tests:

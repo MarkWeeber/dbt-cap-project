@@ -10,8 +10,8 @@
             "alias": "dev",
             "type": "file",
             "path": "/mnt/data/Projects/dbt-cap-project/dev.duckdb",
-            "attached": true,
-            "readOnly": false
+            "attached": false,
+            "readOnly": true
         }
     ],
     "duckdb.defaultDatabase": "dev",

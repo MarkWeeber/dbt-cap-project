@@ -88,3 +88,101 @@ models:
         description: Quote asset for Symbol
         tests:
           - not_null
+
+  - name: stg_positions
+    description: Individual order placements submitted by Traders on the exchange
+    columns:
+      - name: position_id
+        description: Position ID
+        tests:
+          - not_null
+      - name: trader_id
+        description: Trader's ID
+        tests:
+          - not_null
+      - name: symbol
+        description: The trading pair symbol (e.g., BTCUSDT or ETHUSDT)
+        tests:
+          - not_null
+      - name: side
+        description: Order action direction, either LONG (buy) or SHORT (sell)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['LONG', 'SHORT']
+      - name: status
+        description: The status of position, either CLOSED or PARTIALLY_CLOSED
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['CLOSED', 'PARTIALLY_CLOSED']
+      - name: margin_mode
+        description: Margin mode used for the position, either CROSS (shared account balance) or ISOLATED (restricted risk)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['CROSS', 'ISOLATED']
+      - name: leverage
+        description: Multiplier leverage applied to the position
+        tests:
+          - not_null
+      - name: entry_price
+        description: Average execution price when entering/opening the position
+        tests:
+          - not_null
+      - name: close_price
+        description: Average execution price when closing the position
+        tests:
+          - not_null
+      - name: opened_volume
+        description: Total asset or contract volume when the position was initially opened
+        tests:
+          - not_null
+      - name: closed_volume
+        description: Amount of volume that has been closed so far
+        tests:
+          - not_null
+      - name: remaining_volume
+        description: Unclosed volume remaining in the position (non-zero for partially closed positions)
+        tests:
+          - not_null
+      - name: max_open_interest
+        description: Peak volume or open interest reached during the entire lifecycle of the position
+        tests:
+          - not_null
+      - name: gross_pnl
+        description: Gross profit and loss of the position before accounting for fees and funding
+        tests:
+          - not_null
+      - name: funding_pnl
+        description: Accumulated funding fees paid or received for holding perpetual futures over time
+        tests:
+          - not_null
+      - name: trading_fee
+        description: Total exchange trading fees charged for opening and closing the position
+        tests:
+          - not_null
+      - name: liquidation_fee
+        description: Penalty or fee charged if the position was forcibly liquidated by the platform
+        tests:
+          - not_null
+      - name: net_pnl
+        description: Final net profit and loss after accounting for gross PnL, funding, and all fees
+        tests:
+          - not_null
+      - name: roi
+        description: Return on Investment percentage for this specific position calculated by the platform
+        tests:
+          - not_null
+      - name: pnl_currency
+        description: Currency in which PnL and fees are denominated (typically USDT)
+      - name: opened_at
+        description: Exact timestamp when the position was opened (in Unix milliseconds)
+        tests:
+          - not_null
+      - name: closed_at
+        description: Exact timestamp when the position was closed (in Unix milliseconds)
+      - name: updated_at
+        description: Timestamp when the position status or data was last updated by the exchange (in Unix milliseconds)
+        tests:
+          - not_null
