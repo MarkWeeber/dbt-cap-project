@@ -1,6 +1,6 @@
 models:
 
-  - name: ref_traders
+  - name: stg_traders
     description: Reference for Traders information
     columns:
       - name: trader_id
@@ -71,7 +71,7 @@ models:
               arguments:
                 column_type: double
 
-  - name: ref_symbols
+  - name: stg_symbols
     description: Reference for accepted Symbols
     columns:
       - name: symbol

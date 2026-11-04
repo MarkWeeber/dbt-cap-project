@@ -46,3 +46,31 @@ SELECT * FROM (
   SELECT * FROM './dbt_project/seeds/positions.csv'
 ) AS _query
 WHERE "is_fully_closed" IN ('false')
+
+--- testing combining orders and positions tables
+SELECT 
+    o.*
+FROM "dev"."DEV"."orders" o
+JOIN "dev"."DEV"."positions" p
+    ON o.trader_id = p.trader_id
+   AND o.symbol = p.symbol
+   -- fitting into time window
+   AND o.created_at_ts >= p.opened_at_ts
+   AND o.created_at_ts <= COALESCE(p.closed_at_ts, p.updated_at)
+WHERE p.trader_id = 4555301969096159497
+  AND p.position_id = 1127582159478145024;
+
+
+--- testing some orders.csv 
+with b as (
+    select min(created_at) as mn, max(updated_at) as mx, count(*) as n
+    from 'dbt_project/seeds/orders.csv'
+)
+select *
+from b
+where n > 0
+  and (mx - mn) < 20 * 86400000;
+
+--- SOME TESTS FOR CLEAN UPS:
+SELECT * FROM 'dbt_project/seeds/positions.csv'
+WHERE closed_at IS NULL;
