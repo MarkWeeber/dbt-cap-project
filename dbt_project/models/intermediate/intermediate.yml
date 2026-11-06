@@ -1,0 +1,117 @@
+models:
+
+  - name: int_positions
+    description: Table for Positions info, only necessary columns kept, filtered only by used symbols from symbols seed, surrogate key added over original position_id, trader_id, opened_at and side columns
+    columns:
+      - name: position_id
+        description: A new field, specific position unique ID, surrogate key over original position_id, trader_id, opened_at and a side
+        tests:
+          - unique
+          - not_null
+      - name: trader_id
+        description: Trader's ID
+        tests:
+          - not_null
+      - name: symbol
+        description: The trading pair symbol (e.g., BTCUSDT or ETHUSDT)
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_symbols')
+                field: symbol
+      - name: side
+        description: Order action direction, either LONG (buy) or SHORT (sell)
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['LONG', 'SHORT']
+      - name: status
+        description: The status of position, either CLOSED or PARTIALLY_CLOSED
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['CLOSED', 'PARTIALLY_CLOSED']
+      - name: leverage
+        description: Multiplier leverage applied to the position
+        tests:
+          - not_null
+      - name: entry_price
+        description: Average execution price when entering/opening the position
+        tests:
+          - not_null
+      - name: close_price
+        description: Average execution price when closing the position
+        tests:
+          - not_null
+      - name: opened_volume
+        description: Total asset or contract volume when the position was initially opened
+        tests:
+          - not_null
+      - name: closed_volume
+        description: Amount of volume that has been closed so far
+        tests:
+          - not_null
+      - name: remaining_volume
+        description: Unclosed volume remaining in the position (non-zero for partially closed positions)
+        tests:
+          - not_null
+      - name: gross_pnl
+        description: Gross profit and loss of the position before accounting for fees and funding
+        tests:
+          - not_null
+      - name: funding_pnl
+        description: Accumulated funding fees paid or received for holding perpetual futures over time
+        tests:
+          - not_null
+      - name: trading_fee
+        description: Total exchange trading fees charged for opening and closing the position
+        tests:
+          - not_null
+      - name: liquidation_fee
+        description: Penalty or fee charged if the position was forcibly liquidated by the platform
+        tests:
+          - not_null
+      - name: net_pnl
+        description: Final net profit and loss after accounting for gross PnL, funding, and all fees
+        tests:
+          - not_null
+      - name: roi
+        description: Return on Investment percentage for this specific position calculated by the platform
+        tests:
+          - not_null
+      - name: opened_at
+        description: Exact timestamp when the position was opened (in Unix milliseconds)
+        tests:
+          - not_null
+      - name: closed_at
+        description: Exact timestamp when the position was closed (in Unix milliseconds)
+
+  - name: int_count_positions_btc_hourly
+    description: Generates an hourly matrix of open position counts for BTCUSDT only, dynamically creating a column for each unique trader by name with spaces replaced by underscores and a symbol-specific suffix.
+    columns:
+      - name: time
+        description: Datetime with hour grain
+        tests:
+          - unique
+          - not_null
+
+  - name: int_count_positions_all_symbols_hourly
+    description: Generates an hourly matrix of open position counts for BTCUSDT only, dynamically creating a column for each unique trader by name with spaces replaced by underscores and a symbol-specific suffix.
+    columns:
+      - name: time
+        description: Datetime with hour grain
+        tests:
+          - unique
+          - not_null
+
+  - name: int_unrealized_pnl_btc_hourly
+    description: Generates an hourly matrix of total unrealized PnL for BTCUSDT positions, dynamically creating a column for each unique trader by name.
+    columns:
+      - name: time
+        description: Datetime with hour grain
+        tests:
+          - unique
+          - not_null

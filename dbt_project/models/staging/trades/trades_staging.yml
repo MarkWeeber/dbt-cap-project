@@ -109,19 +109,22 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['LONG', 'SHORT']
+              arguments:
+                values: ['LONG', 'SHORT']
       - name: status
         description: The status of position, either CLOSED or PARTIALLY_CLOSED
         tests:
           - not_null
           - accepted_values:
-              values: ['CLOSED', 'PARTIALLY_CLOSED']
+              arguments:
+                values: ['CLOSED', 'PARTIALLY_CLOSED']
       - name: margin_mode
         description: Margin mode used for the position, either CROSS (shared account balance) or ISOLATED (restricted risk)
         tests:
           - not_null
           - accepted_values:
-              values: ['CROSS', 'ISOLATED']
+              arguments:
+                values: ['CROSS', 'ISOLATED']
       - name: leverage
         description: Multiplier leverage applied to the position
         tests:

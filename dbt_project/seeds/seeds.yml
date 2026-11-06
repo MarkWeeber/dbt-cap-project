@@ -37,7 +37,8 @@ seeds:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['BUY', 'SELL']
+              arguments:
+                values: ['BUY', 'SELL']
       - name: created_at
         data_tests:
           - not_null
@@ -70,4 +71,5 @@ seeds:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['LONG', 'SHORT']
+              arguments:
+                values: ['LONG', 'SHORT']
