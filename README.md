@@ -112,7 +112,7 @@ _To be filled in once the marts are built._
 - [x] Config layer + repo hygiene
 - [x] Extraction scripts (window chunking, cursor pagination, page-size fallback)
 - [x] Seeds with snapshot dating
-- [ ] Source definitions and seed tests
+- [x] Source definitions and seed tests
 - [ ] Staging layer
 - [ ] Position-level PnL recomputation + reconciliation tests
 - [ ] Daily reconciliation against the source's published series
