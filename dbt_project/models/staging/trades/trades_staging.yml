@@ -90,7 +90,7 @@ models:
           - not_null
 
   - name: stg_positions
-    description: Individual order placements submitted by Traders on the exchange
+    description: Individual positions submitted by Traders on the exchange
     columns:
       - name: position_id
         description: Position ID
@@ -112,12 +112,12 @@ models:
               arguments:
                 values: ['LONG', 'SHORT']
       - name: status
-        description: The status of position, either CLOSED or PARTIALLY_CLOSED
+        description: TThe status of position, mainly CLOSED or PARTIALLY_CLOSED, but if OPEN then the record needs additional processing
         tests:
           - not_null
           - accepted_values:
               arguments:
-                values: ['CLOSED', 'PARTIALLY_CLOSED']
+                values: ['CLOSED', 'PARTIALLY_CLOSED', 'OPEN']
       - name: margin_mode
         description: Margin mode used for the position, either CROSS (shared account balance) or ISOLATED (restricted risk)
         tests:
@@ -135,8 +135,6 @@ models:
           - not_null
       - name: close_price
         description: Average execution price when closing the position
-        tests:
-          - not_null
       - name: opened_volume
         description: Total asset or contract volume when the position was initially opened
         tests:
@@ -174,7 +172,7 @@ models:
         tests:
           - not_null
       - name: roi
-        description: Return on Investment percentage for this specific position calculated by the platform
+        description: Return on Investment rate for this specific position calculated by the platform
         tests:
           - not_null
       - name: pnl_currency

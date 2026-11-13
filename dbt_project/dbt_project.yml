@@ -39,3 +39,12 @@ flags:
 vars:
   date_from: "2026-01-01"
   date_to: "2026-09-30"
+  approved_symbols:
+    - 'btcusdt'
+    - 'ethusdt'
+    - 'solusdt'
+    - 'aaveusdt'
+    - 'twtusdt'
+    - 'bnbusdt'
+    - 'ltcusdt'
+    - 'xrpusdt'

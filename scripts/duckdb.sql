@@ -74,3 +74,8 @@ where n > 0
 --- SOME TESTS FOR CLEAN UPS:
 SELECT * FROM 'dbt_project/seeds/positions.csv'
 WHERE closed_at IS NULL;
+
+
+
+--- SOME TESTS:
+SELECT UPPER(symbol) FROM unnest(['btcusdt','ethusdt']) AS t(symbol);

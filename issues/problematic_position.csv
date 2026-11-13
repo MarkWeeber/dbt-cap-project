@@ -1,0 +1,2 @@
+position_id	trader_id	symbol	side	status	margin_mode	leverage	entry_price	close_price	opened_volume	closed_volume	remaining_volume	max_open_interest	gross_pnl	funding_pnl	trading_fee	liquidation_fee	net_pnl	roi	pnl_currency	opened_at	closed_at	updated_at
+1119689393033129984	4555302040718094637	AAVEUSDT	SHORT	PARTIALLY_CLOSED	CROSS	20	73.6403871	81.56244123	108.5	55.3	53.2	108.5	-438.08959348	106.96962371	3.47009107	0	-334.59006084	-8.6437599	USDT	1781719554122	NULL	1782353855410

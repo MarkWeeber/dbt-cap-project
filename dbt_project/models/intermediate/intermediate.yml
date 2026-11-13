@@ -3,11 +3,15 @@ models:
   - name: int_positions
     description: Table for Positions info, only necessary columns kept, filtered only by used symbols from symbols seed, surrogate key added over original position_id, trader_id, opened_at and side columns
     columns:
-      - name: position_id
+      - name: position_sk
         description: A new field, specific position unique ID, surrogate key over original position_id, trader_id, opened_at and a side
         tests:
           - unique
           - not_null
+      - name: position_id
+        description: Position ID from source
+        tests:
+          - not_null  
       - name: trader_id
         description: Trader's ID
         tests:
@@ -28,12 +32,12 @@ models:
               arguments:
                 values: ['LONG', 'SHORT']
       - name: status
-        description: The status of position, either CLOSED or PARTIALLY_CLOSED
+        description: The status of position, mainly CLOSED or PARTIALLY_CLOSED, but if OPEN then the record needs additional processing
         tests:
           - not_null
           - accepted_values:
               arguments:
-                values: ['CLOSED', 'PARTIALLY_CLOSED']
+                values: ['CLOSED', 'PARTIALLY_CLOSED', 'OPEN']
       - name: leverage
         description: Multiplier leverage applied to the position
         tests:
@@ -44,8 +48,6 @@ models:
           - not_null
       - name: close_price
         description: Average execution price when closing the position
-        tests:
-          - not_null
       - name: opened_volume
         description: Total asset or contract volume when the position was initially opened
         tests:
@@ -79,17 +81,17 @@ models:
         tests:
           - not_null
       - name: roi
-        description: Return on Investment percentage for this specific position calculated by the platform
+        description: Return on Investment rate for this specific position calculated by the platform
         tests:
           - not_null
       - name: opened_at
-        description: Exact timestamp when the position was opened (in Unix milliseconds)
+        description: Exact timestamp when the position was opened
         tests:
           - not_null
       - name: closed_at
-        description: Exact timestamp when the position was closed (in Unix milliseconds)
+        description: Exact timestamp when the position was closed
 
-  - name: int_count_positions_btc_hourly
+  - name: int_open_position_counts_btc_hourly
     description: Generates an hourly matrix of open position counts for BTCUSDT only, dynamically creating a column for each unique trader by name with spaces replaced by underscores and a symbol-specific suffix.
     columns:
       - name: time
@@ -98,8 +100,8 @@ models:
           - unique
           - not_null
 
-  - name: int_count_positions_all_symbols_hourly
-    description: Generates an hourly matrix of open position counts for BTCUSDT only, dynamically creating a column for each unique trader by name with spaces replaced by underscores and a symbol-specific suffix.
+  - name: int_open_position_counts_all_hourly
+    description: Generates an hourly matrix of open position counts for all allowed symbols, dynamically creating a column for each unique trader by name with spaces replaced by underscores and a _count suffix.
     columns:
       - name: time
         description: Datetime with hour grain
@@ -112,6 +114,15 @@ models:
     columns:
       - name: time
         description: Datetime with hour grain
+        tests:
+          - unique
+          - not_null
+
+  - name: int_h1_timeline
+    description: A table for every H1 timestamp
+    columns:
+      - name: hour
+        description: A time for each hour
         tests:
           - unique
           - not_null
