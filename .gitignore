@@ -32,3 +32,4 @@ data/raw/_probe/
 # others
 temp/
 .vscode
+vscode/
