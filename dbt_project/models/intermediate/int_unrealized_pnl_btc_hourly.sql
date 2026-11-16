@@ -2,18 +2,24 @@
 dbt_project/models/intermediate/int_unrealized_pnl_btc_hourly.sql
 
 One row per hour of the analysis window, one column per trader, holding that
-trader's aggregate unrealized PnL on BTCUSDT across every position open during
-the hour.
+trader's aggregate unrealized PnL on the filtered symbol across every position
+open during the hour.
 
 Mark price is the close of the hour, so a position opened part-way through an
 hour is valued after its entry rather than before it.
 
 Sign convention follows the broker: positive means the position is in profit.
 
-Only BTCUSDT is covered here. Traders are generated as columns from stg_traders
-at compile time, so a renamed trader changes the schema and needs a
---full-refresh.
+A partially closed position is marked on its remaining size from the hour of the
+partial close onwards; the realized leg stays in net_pnl and does not appear
+here, so the column drops sharply at that hour by design.
+
+Traders are generated as columns from stg_traders at compile time, so a renamed
+trader changes the schema and needs a --full-refresh.
 #}
+
+{%- set filter_symbol = 'BTCUSDT' -%}
+{%- set market_values_source = 'stg_btcusdt_h1' -%}
 
 {%- set get_traders_query -%}
     SELECT trader_id, name
@@ -38,28 +44,37 @@ WITH filtered_positions AS (
         side,
         entry_price,
         opened_volume,
-        closed_at,
-        gross_pnl,
-        opened_at
+        remaining_volume,
+        status,
+        updated_at,
+        opened_at,
+        closed_at
     FROM {{ ref('int_positions') }}
-    WHERE symbol = 'BTCUSDT'
+    WHERE symbol = '{{ filter_symbol }}'
 ),
 
-btc_price AS (
+symbol_price AS (
     SELECT
         "timestamp",
         "close" AS symbol_close_price
-    FROM {{ ref('src_btcusdt_h1') }}
+    FROM {{ ref(market_values_source) }}
 )
 
 SELECT
     t.hour AS time,
-
     {%- for trader in traders %}
 
     SUM(
         CASE WHEN p.trader_id = {{ trader['trader_id'] }}
-             THEN {{ total_unrealized_pnl_hours('p.side', 'p.entry_price', 'p.opened_volume', 'b.symbol_close_price', 'p.closed_at', 't.hour', 'p.gross_pnl') }}
+             THEN {{ total_unrealized_pnl_hours(
+                        'p.side',
+                        'p.entry_price',
+                        'p.opened_volume',
+                        'p.remaining_volume',
+                        'p.status',
+                        'p.updated_at',
+                        't.hour',
+                        'b.symbol_close_price') }}
              ELSE 0 END
     ) AS "{{ col_names[loop.index0] }}"{% if not loop.last %},{% endif %}
 
@@ -67,12 +82,13 @@ SELECT
 
 FROM {{ ref('int_h1_timeline') }} t
 
--- narrows the union grid to BTCUSDT on purpose: this model needs a BTC mark price
-INNER JOIN btc_price b
+-- narrows the union grid to the filtered symbol on purpose: this model needs a
+-- price series for it
+INNER JOIN symbol_price b
     ON b."timestamp" = t.hour
 
 LEFT JOIN filtered_positions p
     ON {{ positions_is_within_hour('t.hour', 'p.opened_at', 'p.closed_at') }}
 
-GROUP BY t.hour, b.symbol_close_price
+GROUP BY t.hour
 ORDER BY t.hour
