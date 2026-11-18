@@ -102,6 +102,7 @@ def main() -> int:
 
     DUCKDB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = duckdb.connect(str(DUCKDB_PATH))
+    conn.execute("SET TimeZone='UTC'")
 
     try:
         # Rebuild RAW atomically: either the whole schema reloads, or nothing changes.
