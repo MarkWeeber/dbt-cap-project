@@ -33,3 +33,4 @@ data/raw/_probe/
 temp/
 .vscode
 vscode/
+**/.fuse_hidden*

@@ -1,0 +1,26 @@
+models:
+
+  - name: stg_close_h1
+    description: Hourly close prices for all approved symbols, one column per symbol, aligned on a shared timestamp spine
+    columns:
+      - name: timestamp
+        description: Hour start, timezone aware
+        data_tests:
+          - unique
+          - not_null
+      - name: btcusdt_close
+        description: BTCUSDT close price for the hour
+      - name: ethusdt_close
+        description: ETHUSDT close price for the hour
+      - name: solusdt_close
+        description: SOLUSDT close price for the hour
+      - name: aaveusdt_close
+        description: AAVEUSDT close price for the hour
+      - name: twtusdt_close
+        description: TWTUSDT close price for the hour
+      - name: bnbusdt_close
+        description: BNBUSDT close price for the hour
+      - name: ltcusdt_close
+        description: LTCUSDT close price for the hour
+      - name: xrpusdt_close
+        description: XRPUSDT close price for the hour

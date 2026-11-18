@@ -79,3 +79,7 @@ WHERE closed_at IS NULL;
 
 --- SOME TESTS:
 SELECT UPPER(symbol) FROM unnest(['btcusdt','ethusdt']) AS t(symbol);
+
+SELECT current_setting('TimeZone');
+
+SELECT count(*) FROM "dev"."DEV"."int_unrealized_pnl_hourly" WHERE missing_marks <> 0;

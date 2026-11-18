@@ -1,0 +1,3 @@
+git ls-files dbt_project scripts | while IFS= read -r f; do
+  [ -s "$f" ] && [ -n "$(tail -c1 "$f")" ] && echo "missing newline: $f"
+done

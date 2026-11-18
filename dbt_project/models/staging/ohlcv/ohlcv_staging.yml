@@ -18,13 +18,6 @@ models:
           - dbt_expectations.expect_column_values_to_be_of_type:
               arguments:
                 column_type: double
-          # - dbt_expectations.expect_column_quantile_values_to_be_between:
-          #     config:
-          #       severity: warn
-          #     arguments:
-          #       quantile: 0.95
-          #       min_value: 1000
-          #       max_value: 150000
       - name: high
         description: Highest value for H1
         data_tests:

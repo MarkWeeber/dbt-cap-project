@@ -5,4 +5,6 @@ dbt_project:
       path: "../dev.duckdb"
       schema: DEV
       threads: 4
+      settings:
+        TimeZone: 'UTC'
   target: dev

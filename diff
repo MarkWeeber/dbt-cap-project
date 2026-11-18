@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+out="$(mktemp)"
+{
+  git diff HEAD
+  git ls-files --others --exclude-standard | while IFS= read -r f; do
+    git diff --no-index -- /dev/null "$f" || true
+  done
+} > "$out"
+
+mv "$out" temp/diff.txt
+wc -l < temp/diff.txt

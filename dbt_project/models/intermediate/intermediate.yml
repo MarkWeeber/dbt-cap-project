@@ -143,3 +143,26 @@ models:
         tests:
           - unique
           - not_null
+
+  - name: int_unrealized_pnl_hourly
+    description: >
+      Hourly matrix of unrealized PnL, one column per trader with an
+      _unrealized_pnl suffix, across all approved symbols.
+
+      Mark price is the close of the hour for the position's own symbol. A
+      partially closed position is marked on its remaining size from the hour of
+      the partial close onwards; its realized leg stays in net_pnl, so the column
+      drops sharply at that hour by design.
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "missing_marks = 0"
+    columns:
+      - name: time
+        description: Hour start, timezone aware
+        tests:
+          - unique
+          - not_null
+      - name: missing_marks
+
+        
